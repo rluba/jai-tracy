@@ -20,4 +20,6 @@
     // or interactively). This is the bulk of the actual code in this module.
 
     #load "runtime.jai";
+    #library,system,link_always "advapi32";
+    #library,system,link_always "user32";
 }
