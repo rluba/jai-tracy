@@ -8,3 +8,4 @@
 *.exp
 *.a
 *.dylib
+tests/test
