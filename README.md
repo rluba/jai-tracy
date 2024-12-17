@@ -11,10 +11,23 @@ It’s originally based on [vrcamillo/jai-tracy](https://github.com/vrcamillo/ja
 
 ## Profiling run-time code
 
+### If your project does not have a custom metaprogram (i.e. you never call `set_build_options_dc({do_output = false})`)
+
 Just use this module as a metaprogram plugin by adding `-pluging tracy` to your compile command.
 If you want to profile modules code (in addition to your application code) you can append the argument `-modules`.
 
 You might need to add `-- import_dir <path_to_modules_folder_that_contains_tracy>` if this module does not live in your default modules folder.
+
+### Adding this plugin to your metaprogram
+
+If your program has a metaprogram, you need to add this plugin to your metaprogram, which involves…
+
+1. adding `#import "Metaprogram_Plugins"`,
+2. calling `Metaprogram_Plugins.init_plugins(…)`,
+3. calling the plugin’s `before_intercept`, `add_source`, etc. at the appropriate time.
+
+Take a look at `Default_Metaprogram` for how to support plugins.
+
 
 ## Profiling compile-time code
 
