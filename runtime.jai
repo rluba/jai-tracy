@@ -33,15 +33,16 @@
 		`defer ___tracy_emit_zone_end(tracy_ctx);
 	}
 
-    #run {
-        Compiler :: #import "Compiler";
-        // Tracy requires these libs to work.
-        #if OS == .WINDOWS {
-            TRACY_DEPENDENCY_LIBS :: string.["ws2_32.lib", "msvcprtd.lib", "advapi32.lib", "user32.lib"];
-        } else {
-            TRACY_DEPENDENCY_LIBS :: string.["-lpthread", "-ldl", "-lc++"];
-        }
-        Compiler.set_build_options_dc(.{append_linker_arguments=TRACY_DEPENDENCY_LIBS});
+    // Tracy requires these libs to work.
+    #if OS == .WINDOWS {
+        #library,system,link_always "ws2_32";
+        #library,system,link_always "msvcprtd";
+        #library,system,link_always "advapi32";
+        #library,system,link_always "user32";
+    } else {
+        #library,system,link_always "libpthread";
+        #library,system,link_always "libdl";
+        #library,system,link_always "libc++";
     }
 } else {
 	FrameMark :: () #expand #no_debug {}
