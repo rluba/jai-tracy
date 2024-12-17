@@ -1,13 +1,13 @@
 # Tracy bindings for Jai
 
-Jai bindings for the [Tracy profiler](https://github.com/wolfpld/tracy) v0.9.
+Jai bindings for the [Tracy profiler](https://github.com/wolfpld/tracy) v0.11.1
 
 It’s originally based on [vrcamillo/jai-tracy](https://github.com/vrcamillo/jai-tracy), but modified to work as an auto-instrumenting metaprogram plugin (like modules/Iprof).
 
 ## Setup
 
 1. Ensure that the `tracy` submodule is cloned at the root of the repository.
-2. Build the static and shared libraries using `jai build.jai` at the root of the repository.
+2. Build the static and shared libraries using `jai generate.jai` at the root of the repository.
 
 ## Profiling run-time code
 

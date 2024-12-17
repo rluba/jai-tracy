@@ -2,7 +2,7 @@
 // Helpful macros to interface with the C api
 //
 #if ENABLED {
-	#load "c_bindings.jai";
+	#load "bindings.jai";
 
 	// Call this every frame.
 	FrameMark :: () #expand #no_debug {
@@ -23,7 +23,7 @@
             }
 		}
 
-		tracy_loc := ___tracy_alloc_srcloc(xx location.line_number, location.fully_pathed_filename.data, xx location.fully_pathed_filename.count, ZONE_NAME.data, ZONE_NAME.count);
+		tracy_loc := ___tracy_alloc_srcloc(xx location.line_number, location.fully_pathed_filename.data, xx location.fully_pathed_filename.count, ZONE_NAME.data, ZONE_NAME.count, 0);
 		tracy_ctx := ___tracy_emit_zone_begin_alloc(tracy_loc, 1);
 
 		if text  ___tracy_emit_zone_text(tracy_ctx, text.data, cast(u64) text.count);
