@@ -128,7 +128,7 @@ __Tracy :: #import "tracy"(IMPORT_MODE=.CLIENT);
 #add_context _Tracy :: __Tracy;
 DONE
 
-PREPEND_ZONE_CODE :: #code Context._Tracy.ZoneScoped();
+PREPEND_ZONE_CODE :: #code #Context._Tracy.ZoneScoped();
 
 #scope_module
 #import "Basic";
