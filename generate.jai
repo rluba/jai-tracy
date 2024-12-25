@@ -97,7 +97,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Build_Options
         array_add(*extra_clang_arguments, "-D", "TRACY_ENABLE");
 
         generate_library_declarations = false;
-        footer = tprint(FOOTER_TEMPLATE, to_lower_copy_new(LIB_BASE_NAME), LIB_BASE_NAME);
+        footer = tprint(FOOTER_TEMPLATE, to_lower_copy(LIB_BASE_NAME), LIB_BASE_NAME);
 
         log_stripped_declarations = false;
         generate_compile_time_struct_checks = false;
