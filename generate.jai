@@ -1,7 +1,7 @@
 AT_COMPILE_TIME :: true;
 
 SOURCE_PATH   :: "tracy";
-LIB_BASE_NAME :: "TracyClient";
+LIB_BASE_NAME :: "libtracy";
 
 #if AT_COMPILE_TIME {
     #run,stallable {
