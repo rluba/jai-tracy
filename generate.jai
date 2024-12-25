@@ -63,6 +63,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Build_Options
                 array_add(*args, "-arch", "x86_64", macos_x64_version_arg);
                 success &&= build_cpp_dynamic_lib(lib_path_x64,   source_file, extra = args, debug = compile_debug);
                 success &&= build_cpp_static_lib( lib_path_x64,   source_file, extra = args, debug = compile_debug);
+                success &&= run("install_name_tool", "-id", tprint("@rpath/%.dylib", path_filename(lib_path_x64)), tprint("%.dylib", lib_path_x64));
             }
             // arm64 variant
             {
@@ -71,6 +72,7 @@ generate_bindings :: (args: [] string, minimum_os_version: type_of(Build_Options
                 array_add(*args, "-arch", "arm64", macos_arm64_version_arg);
                 success &&= build_cpp_dynamic_lib(lib_path_arm64, source_file, extra = args, debug = compile_debug);
                 success &&= build_cpp_static_lib( lib_path_arm64, source_file, extra = args, debug = compile_debug);
+                success &&= run("install_name_tool", "-id", tprint("@rpath/%.dylib", path_filename(lib_path_arm64)), tprint("%.dylib", lib_path_arm64));
             }
             // create universal binaries
             run_result := run_command("lipo", "-create", tprint("%.dylib", lib_path_x64), tprint("%.dylib", lib_path_arm64), "-output", tprint("%.dylib", lib_path));
@@ -128,6 +130,18 @@ tracy_visitor :: (decl: *Declaration, parent_decl: *Declaration) -> Declaration_
     return .RECURSE;
 }
 
+run :: (command: .. string, working_directory := "") -> bool {
+    result, output_string, error_string := run_command(..command, working_directory = working_directory, capture_and_return_output = true, print_captured_output = true);
+    defer {
+        free(output_string);
+        free(error_string);
+    }
+    if result.exit_code != 0 {
+        log_error("Could not run command \"%\" in directory \"%\". Exit code: %\nError:\n%", get_quoted_command_string(command), working_directory, result.exit_code, error_string);
+        return false;
+    }
+    return true;
+}
 
 FOOTER_TEMPLATE :: #string END
 
