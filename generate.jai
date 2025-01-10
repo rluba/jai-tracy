@@ -8,7 +8,7 @@ LIB_BASE_NAME :: "libtracy";
         set_build_options_dc(.{do_output=false});
         options := get_build_options();
         args := options.compile_time_command_line;
-        if !generate_bindings(args, options.minimum_os_version) {
+        if !generate_bindings(args) {
             compiler_set_workspace_status(.FAILED);
         }
     }
@@ -17,13 +17,13 @@ LIB_BASE_NAME :: "libtracy";
 
     main :: () {
         set_working_directory(path_strip_filename(get_path_of_running_executable()));
-        if !generate_bindings(get_command_line_arguments(), #run get_build_options().minimum_os_version) {
+        if !generate_bindings(get_command_line_arguments()) {
             exit(1);
         }
     }
 }
 
-generate_bindings :: (args: [] string, minimum_os_version: type_of(Build_Options.minimum_os_version)) -> bool {
+generate_bindings :: (args: [] string) -> bool {
     compile        := !array_find(args, "-no_compile");
     compile_debug  := array_find(args, "-debug");
 
