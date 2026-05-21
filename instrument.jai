@@ -9,6 +9,7 @@
 get_plugin :: () -> *Metaprogram_Plugin {
     p := New(My_Plugin);  // We are making this on the heap so you could have more than one instance of this plugin running.
 
+    p.init             = init;
     p.before_intercept = before_intercept;
     p.add_source       = add_source;
     p.message          = message;
@@ -16,8 +17,6 @@ get_plugin :: () -> *Metaprogram_Plugin {
     p.shutdown         = shutdown;
 
     p.log_help         = log_help;
-
-    p.handle_one_option = handle_one_option;
 
     BUFFER_SIZE :: 4096;
     buffer: [BUFFER_SIZE] u8;
@@ -33,6 +32,65 @@ get_plugin :: () -> *Metaprogram_Plugin {
 //
 // Here are the hooks that get called directly at compile-time:
 //
+init :: (p: *Metaprogram_Plugin, options: [] string) -> bool {
+    plugin := cast(*My_Plugin) p;
+
+    cursor := 0;
+    while cursor < options.count {
+        s := options[cursor];
+        if s == {
+            case "-min_size";
+                if cursor >= options.count-1 {
+                    log_error("[Tracy] Missing argument to -min_size\n");
+                    return false;
+                }
+
+                arg := options[cursor+1];
+                result, success, remainder := string_to_int(arg);
+                if !success {
+                    log_error("[Tracy] Argument to -min_size was expected to be an integer, but we got '%'.\n", arg);
+                    return false;
+                }
+
+                if eat_spaces(remainder) {
+                    log_error("[Tracy] Found junk at the end of the argument to -min_size '%'.\n", remainder);
+                    return false;
+                }
+
+                plugin.min_size = result;
+                cursor += 2;
+
+            case "-modules";
+                plugin.instrument_modules = true;
+                cursor += 1;
+
+                if cursor < options.count {
+                    maybe_module_args := options[cursor];
+                    if begins_with(maybe_module_args, "-")  continue;
+
+                    plugin.instrument_module_allow_list = split(maybe_module_args, ",");
+                    cursor += 1;
+                    // log("[Tracy] Allow-listing only modules: %", plugin.instrument_module_allow_list);
+                }
+
+            case "-csv";
+                if cursor >= options.count-1 {
+                    log_error("[Tracy] Missing argument to -csv\n");
+                    return false;
+                }
+
+                plugin.csv_output_filename = options[cursor+1];
+                cursor += 2;
+
+            case;
+                log_error("[Tracy] Unknown command line argument '%'\n", s);
+                return false;
+        }
+    }
+
+    return true;
+}
+
 before_intercept :: (p: *Metaprogram_Plugin, flags: *Intercept_Flags) {
     options := get_build_options(p.workspace);
     import_path: [..] string;
@@ -63,7 +121,7 @@ message :: (p: *Metaprogram_Plugin, message: *Message) {
         h := body.header;
         assert(h != null);
 
-        if h.procedure_flags & (h.procedure_flags.POLYMORPHIC | .COMPILER_GENERATED | .SYNTACTICALLY_MARKED_AS_COMPILER | .QUICK | .TYPE_ONLY | .MACRO) continue;  // @Incomplete: Need maybe we want a user-generated compile_time flag; that would be different than this, which is to detect #compiler.
+        if h.procedure_flags & (h.procedure_flags.POLYMORPHIC | .COMPILER_GENERATED | .SYNTACTICALLY_MARKED_AS_COMPILER | .QUICK | .TYPE_ONLY | .MACRO | .C_CALL) continue;  // @Incomplete: Need maybe we want a user-generated compile_time flag; that would be different than this, which is to detect #compiler.
 
         file := body.enclosing_load;
 
@@ -77,9 +135,14 @@ message :: (p: *Metaprogram_Plugin, message: *Message) {
                 case;
                     if !plugin.instrument_modules continue;
 
+                    allow_list: [..]string;
+                    for plugin.instrument_module_allow_list  array_add(*allow_list, it);
+
                     // Don't profile stuff that is in Tracy itself:
                     // @Robustness: Hardcoded module name for now.
-                    if import.module_name == "tracy"  continue;
+                    array_add(*allow_list, "tracy");
+
+                    if !array_find(allow_list, import.module_name)  continue;
             }
         }
 
@@ -88,8 +151,8 @@ message :: (p: *Metaprogram_Plugin, message: *Message) {
 
         for h.notes {
             if it.text == "NoProfile" {
-                log("[Tracy] Skipping \"%\" due to NoProfile note.\n", h.name);
-                continue;
+                // log("[Tracy] Skipping \"%\" due to NoProfile note.\n", h.name);
+                continue tc;
             }
         }
 
@@ -136,7 +199,7 @@ PREPEND_ZONE_CODE :: #code #Context._Tracy.ZoneScoped();
 #import "File";
 #import "String";
 
-MINIMUM_SIZE_DEFAULT :: 30;
+MINIMUM_SIZE_DEFAULT :: 1;
 
 My_Plugin :: struct {
     #as using base: Metaprogram_Plugin;
@@ -156,6 +219,7 @@ My_Plugin :: struct {
     csv_output_filename: string;
     min_size := MINIMUM_SIZE_DEFAULT;
     instrument_modules := false;
+    instrument_module_allow_list: []string;  // when empty, includes all modules except tracy itself. ignored when instrument_modules is false.
 
     //
     // The user should not mess with these:

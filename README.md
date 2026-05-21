@@ -1,6 +1,6 @@
 # Tracy bindings for Jai
 
-Jai bindings for the [Tracy profiler](https://github.com/wolfpld/tracy) v0.11.1
+Jai bindings for the [Tracy profiler](https://github.com/wolfpld/tracy) v0.13.1
 
 It’s originally based on [vrcamillo/jai-tracy](https://github.com/vrcamillo/jai-tracy), but modified to work as an auto-instrumenting metaprogram plugin (like modules/Iprof).
 
@@ -14,7 +14,9 @@ It’s originally based on [vrcamillo/jai-tracy](https://github.com/vrcamillo/ja
 *This only works if your project does not contain a custom metaprogram! (i.e. you never call `set_build_options_dc({do_output = false})`)* Otherwise see below.
 
 * Just use this module as a metaprogram plugin by adding `-pluging tracy` to your compile command. (Assuming that you have cloned this repo into a folder named `tracy`.)
-* If you want to profile modules code (in addition to your application code) you can append the argument `-modules`.
+* If you want to profile all of your modules code (in addition to your application code) you can append the argument `-modules`. If you want to profile an explicit allow-set of modules,
+  you can provide a comma separated argument to modules, e.g., `-modules foo,bar,baz`. NOTE: We always exclude the `tracy` module itself from being profiled.
+  
 
 You might need to add `-- import_dir <path_to_modules_folder_that_contains_tracy>` if this module does not live in your default modules folder.
 
