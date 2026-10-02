@@ -43,7 +43,7 @@ generate_bindings :: (args: [] string) -> bool {
         source_file := tprint("%/public/TracyClient.cpp", SOURCE_PATH);
 
         #if OS == .WINDOWS {
-            extra_args := string.["/DTRACY_ENABLE", "/DTRACY_EXPORTS"];
+            extra_args := string.["/DTRACY_ENABLE", "/DTRACY_EXPORTS", "/MD"];
         } else {
             extra_args := string.["-DTRACY_ENABLE", "-DTRACY_EXPORTS", "-std=c++11", "-Wno-deprecated-declarations"];
         }
@@ -80,12 +80,10 @@ generate_bindings :: (args: [] string) -> bool {
             run_result  = run_command("lipo", "-create", tprint("%.a",     lib_path_x64), tprint("%.a",     lib_path_arm64), "-output", tprint("%.a",     lib_path));
             success &&= (run_result.exit_code == 0);
         } else {
-            extra: []string;
-            #if OS == .WINDOWS {
-                extra = .["/MD"];
-            }
-            success &&= build_cpp_dynamic_lib(lib_path, source_file, extra = extra_args, debug = compile_debug, extra = extra);
-            success &&= build_cpp_static_lib(lib_path,  source_file, extra = extra_args, debug = compile_debug, extra = extra);
+            success &&= build_cpp_dynamic_lib(lib_path, source_file, extra = extra_args, debug = compile_debug);
+            // On Windows, libtracy.lib is the DLL import library, so let's keep the static archive separate
+            static_path := ifx OS == .WINDOWS then tprint("%_static", lib_path) else lib_path;
+            success &&= build_cpp_static_lib(static_path, source_file, extra = extra_args, debug = compile_debug);
         }
 
         if !success     return false;
